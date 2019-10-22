@@ -179,4 +179,38 @@ router.get('/nearByRestaurant', async(req, res, next) => {
     }
 });
 
+//============================================
+// MENU TABLE
+// GET
+// GET /menu
+//============================================
+router.get('/menu', async(req, res, next) => {
+    console.log(req.query);
+
+    if (req.query.key != API_KEY) {
+        res.send(JSON.stringify({ success: false, message: "Wrong API key" }));
+    } else {
+        var restaurant_id = req.query.restaurantId;
+        if (restaurant_id != null) {
+            try {
+                const pool = await poolPromise;
+                const queryResult = await pool.request()
+                    .input('RestaurantId',sql.Int,restaurant_id)
+                    .query('SELECT id,name,description,image FROM [Menu] WHERE id IN' +
+                        '(SELECT menuId FROM [Restaurant_Menu] WHERE restaurantId=@RestaurantId)');
+                if (queryResult.recordset.length > 0) {
+                    res.send(JSON.stringify({success: true, result: queryResult.recordset}));
+                } else {
+                    res.send(JSON.stringify({success: false, message: "Empty"}));
+                }
+            } catch (err) {
+                res.status(500); // Internal Server Error
+                res.send(JSON.stringify({success: false, message: err.message}));
+            }
+        } else {
+            res.send(JSON.stringify({success: false, message: "Missing restaurantId in query"}));
+        }
+    }
+});
+
 module.exports = router;
