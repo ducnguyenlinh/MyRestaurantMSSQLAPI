@@ -213,4 +213,96 @@ router.get('/menu', async(req, res, next) => {
     }
 });
 
+//============================================
+// FOOD TABLE
+// GET
+// GET /food
+// GET /foodById
+// GET /searchFood
+//============================================
+router.get('/food', async(req, res, next) => {
+    console.log(req.query);
+
+    if (req.query.key != API_KEY) {
+        res.send(JSON.stringify({ success: false, message: "Wrong API key" }));
+    } else {
+        var menu_id = req.query.menuId;
+        if (menu_id != null) {
+            try {
+                const pool = await poolPromise;
+                const queryResult = await pool.request()
+                    .input('MenuId',sql.Int,menu_id)
+                    .query('SELECT id,name,description,image,price,isSize,isAddon,discount FROM [Food] WHERE id IN' +
+                        '(SELECT foodId FROM [Menu_Food] WHERE menuId=@MenuId)');
+                if (queryResult.recordset.length > 0) {
+                    res.send(JSON.stringify({success: true, result: queryResult.recordset}));
+                } else {
+                    res.send(JSON.stringify({success: false, message: "Empty"}));
+                }
+            } catch (err) {
+                res.status(500); // Internal Server Error
+                res.send(JSON.stringify({success: false, message: err.message}));
+            }
+        } else {
+            res.send(JSON.stringify({success: false, message: "Missing menuId in query"}));
+        }
+    }
+});
+
+router.get('/foodById', async(req, res, next) => {
+    console.log(req.query);
+
+    if (req.query.key != API_KEY) {
+        res.send(JSON.stringify({ success: false, message: "Wrong API key" }));
+    } else {
+        var food_id = req.query.foodId;
+        if (food_id != null) {
+            try {
+                const pool = await poolPromise;
+                const queryResult = await pool.request()
+                    .input('FoodId',sql.Int,food_id)
+                    .query('SELECT id,name,description,image,price,isSize,isAddon,discount FROM [Food] WHERE id=@FoodId');
+                if (queryResult.recordset.length > 0) {
+                    res.send(JSON.stringify({success: true, result: queryResult.recordset}));
+                } else {
+                    res.send(JSON.stringify({success: false, message: "Empty"}));
+                }
+            } catch (err) {
+                res.status(500); // Internal Server Error
+                res.send(JSON.stringify({success: false, message: err.message}));
+            }
+        } else {
+            res.send(JSON.stringify({success: false, message: "Missing foodId in query"}));
+        }
+    }
+});
+
+router.get('/searchFood', async(req, res, next) => {
+    console.log(req.query);
+
+    if (req.query.key != API_KEY) {
+        res.send(JSON.stringify({ success: false, message: "Wrong API key" }));
+    } else {
+        var search_query = req.query.foodName;
+        if (search_query != null) {
+            try {
+                const pool = await poolPromise;
+                const queryResult = await pool.request()
+                    .input('SearchQuery',sql.NVarChar, '%' + search_query + '%')
+                    .query('SELECT id,name,description,image,price,isSize,isAddon,discount FROM [Food] WHERE name LIKE @SearchQuery');
+                if (queryResult.recordset.length > 0) {
+                    res.send(JSON.stringify({success: true, result: queryResult.recordset}));
+                } else {
+                    res.send(JSON.stringify({success: false, message: "Empty"}));
+                }
+            } catch (err) {
+                res.status(500); // Internal Server Error
+                res.send(JSON.stringify({success: false, message: err.message}));
+            }
+        } else {
+            res.send(JSON.stringify({success: false, message: "Missing foodId in query"}));
+        }
+    }
+});
+
 module.exports = router;
