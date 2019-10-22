@@ -339,4 +339,38 @@ router.get('/size', async(req, res, next) => {
     }
 });
 
+//============================================
+// ADDON TABLE
+// GET
+// GET /addOn
+//============================================
+router.get('/addOn', async(req, res, next) => {
+    console.log(req.query);
+
+    if (req.query.key != API_KEY) {
+        res.send(JSON.stringify({ success: false, message: "Wrong API key" }));
+    } else {
+        var food_id = req.query.foodId;
+        if (food_id != null) {
+            try {
+                const pool = await poolPromise;
+                const queryResult = await pool.request()
+                    .input('FoodId',sql.Int,food_id)
+                    .query('SELECT id,description,extraPrice FROM [Addon] WHERE id IN ' +
+                        ' (SELECT AddonId FROM [Food_Addon] WHERE foodId=@FoodId)');
+                if (queryResult.recordset.length > 0) {
+                    res.send(JSON.stringify({success: true, result: queryResult.recordset}));
+                } else {
+                    res.send(JSON.stringify({success: false, message: "Empty"}));
+                }
+            } catch (err) {
+                res.status(500); // Internal Server Error
+                res.send(JSON.stringify({success: false, message: err.message}));
+            }
+        } else {
+            res.send(JSON.stringify({success: false, message: "Missing foodId in query"}));
+        }
+    }
+});
+
 module.exports = router;
