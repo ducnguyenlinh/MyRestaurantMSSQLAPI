@@ -87,4 +87,31 @@ router.post('/user', async(req, res, next) => {
     }
 });
 
+//============================================
+// RESTAURANT TABLE
+// GET
+// GET /restaurants
+//============================================
+router.get('/restaurants', async(req, res, next) => {
+    console.log(req.query);
+
+    if (req.query.key != API_KEY) {
+        res.send(JSON.stringify({ success: false, message: "Wrong API key" }));
+    } else {
+        try {
+            const pool = await poolPromise;
+            const queryResult = await pool.request()
+                .query('SELECT ID,Name,Address,Phone,Lat,Lng,UserOwner,Image,PaymentUrl FROM [Restaurant]');
+            if (queryResult.recordset.length > 0) {
+                res.send(JSON.stringify({success: true, result: queryResult.recordset}));
+            } else {
+                res.send(JSON.stringify({success: false, message: "Empty"}));
+            }
+        } catch (err) {
+            res.status(500); // Internal Server Error
+            res.send(JSON.stringify({success: false, message: err.message}));
+        }
+    }
+});
+
 module.exports = router;
